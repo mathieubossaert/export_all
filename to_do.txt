@@ -1,0 +1,18 @@
+[X] une layer est active ?
+
+[X] un feature est selectionné / dessiné ?
+
+layer = qgis.utils.iface.activeLayer()
+for feature in layer.selectedFeatures():
+	print feature.geometry()
+	
+[X] choix d'un répertoire de sortie
+
+[ ] On liste l'ensemble des couches vecteur dispo sauf la couche active
+
+[ ] Créer un QSettings avec le répertoire d'export par défaut
+
+[ ] choix d'un format(shp/spatialite)
+
+[ ] On exporte en shp/spatialite l'interscetion de chacune des couches avec le feature d'export dans un dossier à choisir
+

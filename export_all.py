@@ -1,0 +1,100 @@
+# -*- coding: utf-8 -*-
+"""
+/***************************************************************************
+ Export_all
+                                 A QGIS plugin
+ export all
+                              -------------------
+        begin                : 2014-05-16
+        copyright            : (C) 2014 by CEN L-R
+        email                : sig@cenlr.org
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+"""
+# Import the PyQt and QGIS libraries
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from qgis.core import *
+# Initialize Qt resources from file resources.py
+# import resources_rc
+# Import the code for the dialog
+from export_alldialog import Export_allDialog
+from ui_export_all import Ui_Export_all
+import os.path
+
+class Export_all:
+    def __init__(self, iface):
+        # Save reference to the QGIS interface
+        self.iface = iface
+        # initialize plugin directory
+        self.plugin_dir = os.path.dirname(__file__)
+
+    def initGui(self):
+        # Create action that will start plugin configuration
+        self.action = QAction(
+            QIcon(self.plugin_dir+"/icon.svg"),
+            u"Export all underlaying features", self.iface.mainWindow())
+        # connect the action to the run method
+        self.action.triggered.connect(self.run)
+
+        # Add toolbar button and menu item
+        self.iface.addToolBarIcon(self.action)
+        self.iface.addPluginToMenu(u"&Export All", self.action)
+
+    def unload(self):
+        # Remove the plugin menu item and icon
+        self.iface.removePluginMenu(u"&Export All", self.action)
+        self.iface.removeToolBarIcon(self.action)
+       
+        
+    # run method that performs all the real work
+    def run(self):   
+        self.dlg = Export_allDialog(self.iface)
+        if self.iface.activeLayer() == None :
+                #print u"no layer selected"
+                QMessageBox.information(self.iface.mainWindow(),"Attention","Veuillez selectionner une couche")
+                return
+        elif self.iface.activeLayer().selectedFeatureCount() != 1:
+                self.message = ''
+                if self.iface.activeLayer().selectedFeatureCount() < 1:
+                        message = u"Vous devez sélectionner\nun objet de la couche active"
+                        self.iface.actionSelect().trigger()
+                        print message
+                else: 
+                        message = u"Vous ne pouvez sélectionner qu'un objet"
+                        print message
+                QMessageBox.information(self.iface.mainWindow(),"Attention", message)
+                return
+        nb_selected_features = self.iface.activeLayer().selectedFeatureCount()
+        print str(nb_selected_features) + u" objet(s) sélectionné(s)"
+        
+        #quelle est la geom du feature selectionné ?
+        geom = self.iface.activeLayer().selectedFeatures()[0].geometry()
+        print geom
+                
+        # show the dialog
+        self.dlg.show()
+        # Run the dialog event loop
+        result = self.dlg.exec_()
+        
+        # See if OK was pressed
+        if result == 1:
+                outDir = self.dlg.lineEdit.text()
+                print u"Répertoire de sortie : "+self.dlg.lineEdit.text()
+        
+                allLayers = self.iface.mapCanvas().layers()
+                
+                for layer in allLayers: 
+                        if type(layer)==QgsVectorLayer and layer != self.iface.activeLayer() : 
+                                print layer.name()
+                                # http://gis.stackexchange.com/questions/72907/split-a-feature-when-intersecting-with-a-feature-of-another-layer-using-pyqgis-p
+                                # http://nathanw.net/2013/01/04/using-a-qgis-spatial-index-to-speed-up-your-code/
+                               
